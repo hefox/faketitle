@@ -1,0 +1,5 @@
+<?php
+
+function faketitle_uninstall() {
+  db_query("DELETE from {variable} where name like '%s%%'",'faketitle');
+}

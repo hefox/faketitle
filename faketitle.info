@@ -1,0 +1,4 @@
+name = Fake title
+description = Adds the node title into node content so it can be re-arranged. 
+core = 6.x
+dependencies[]  = content

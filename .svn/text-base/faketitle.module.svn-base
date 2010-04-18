@@ -1,0 +1,87 @@
+<?php
+
+
+function faketitle_form_node_type_form_alter(&$form, $form_state) {
+  $form['faketitle'] = array(
+    '#type' => 'fieldset',
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
+    '#weight' => -1,
+    '#title' => t("Fake title settings"),
+  ); 
+  if ($modes = module_invoke('content', 'build_modes')) {
+    $options = array();
+    foreach ($modes as $key => $value) {
+      if (isset($value['views style']) && $value['views style']) {
+        $options[$key] = $value['title'];
+      }
+    }
+  }
+  else {
+    $options = array(
+      'teaser' => t('Teaser'),
+      'full' => t('Full node')
+    );
+  }
+  $form['faketitle']['faketitle_build_mode'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $options,
+    '#title' => t('Build modes'),
+    '#default_value' => $form['#node_type']->type ? variable_get('faketitle_build_mode_'. $form['#node_type']->type, array()): array(),
+  );
+  $form['faketitle']['faketitle_title'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Remove regular node title'),
+    '#default_value' => $form['#node_type']->type ? variable_get('faketitle_title_'. $form['#node_type']->type, FALSE): FALSE,
+   );
+  $form['faketitle']['faketitle_markup'] = array(
+    '#type' => 'radios',
+    '#title' => t('Style of title'),
+    '#default_value' => $form['#node_type']->type ? variable_get('faketitle_markup_'. $form['#node_type']->type, 'h2'): 'h2',
+    '#options' => array('h2' => 'h2', 'h3' => 'h3', 'h4' => 'h4'),
+   );
+}
+
+function faketitle_theme() {
+  return array(
+    'faketitle' => array(
+      'arguments' => array('title' => NULL, 'node' => NULL, 'style'),
+    ),
+  );
+}
+
+function theme_faketitle($title, $node, $markup = 'h2') {
+  return '<'.$markup.' class="title faketitle">' .$title . '</'.$markup.'>' ;
+}
+/*
+	Implementation of hook_nodeapi()
+*/
+function faketitle_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  switch ($op) {
+    case 'view':
+      if ($a4) return; 
+      $build_modes = variable_get('faketitle_build_mode_' .$node->type, array());
+      if ($node->build_mode === NODE_BUILD_NORMAL || $node->build_mode == NODE_BUILD_PREVIEW) {
+        $context = $a3 ? 'teaser' : 'full';
+      }
+      else {
+        $context = $node->build_mode;
+      }
+      if (in_array($context,$build_modes)) {
+        // add title in 
+        $node->content['title'] = array(
+          '#value' => theme('faketitle', l($node->title,'node/'.$node->nid), $node, variable_get('faketitle_markup_' .$node->type, FALSE)),
+          '#weight' => -100,
+        );
+        if ( variable_get('faketitle_title_' .$node->type, FALSE)) {
+         $node->title = '';
+        }
+        
+      }
+    break;
+  }
+}
+
+
+
+
