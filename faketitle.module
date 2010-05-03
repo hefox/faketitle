@@ -34,6 +34,11 @@ function faketitle_form_node_type_form_alter(&$form, $form_state) {
     '#title' => t('Remove regular node title'),
     '#default_value' => $form['#node_type']->type ? variable_get('faketitle_title_'. $form['#node_type']->type, FALSE): FALSE,
    );
+  $form['faketitle']['faketitle_nolink'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Don't link to title"),
+    '#default_value' => $form['#node_type']->type ? variable_get('faketitle_nolink'. $form['#node_type']->type, FALSE): FALSE,
+   );
   $form['faketitle']['faketitle_markup'] = array(
     '#type' => 'radios',
     '#title' => t('Style of title'),
@@ -69,8 +74,13 @@ function faketitle_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       }
       if (in_array($context,$build_modes)) {
         // add title in 
+        if (variable_get('faketitle_nolink_' .$node->type, FALSE)) {
+          $title = check_plain($node->title);
+        } else {
+          $title = l($node->title,'node/'.$node->nid);
+        }
         $node->content['title'] = array(
-          '#value' => theme('faketitle', l($node->title,'node/'.$node->nid), $node, variable_get('faketitle_markup_' .$node->type, FALSE)),
+          '#value' => theme('faketitle', $title, $node, variable_get('faketitle_markup_' .$node->type, FALSE)),
           '#weight' => -100,
         );
         if ( variable_get('faketitle_title_' .$node->type, FALSE)) {
